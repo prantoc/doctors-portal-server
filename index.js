@@ -17,7 +17,7 @@ async function run() {
         const appOpCollection = client.db("doctorsPortal").collection("appointmentOptions");
         const bookingCollection = client.db('doctorsPortal').collection("bookingAppointment")
 
-
+        //?----------------- bad way aggregate function in mongodb-----------------------------
         app.get('/appointment-options', async (req, res) => {
             const date = req.query.date
             // console.log(date);
@@ -34,6 +34,55 @@ async function run() {
             res.send(options)
 
         })
+
+        //?----------------- best way aggregate function in mongodb--------------------
+        app.get('/v2/appointment-options', async (req, res) => {
+            const date = req.query.date
+            const options = await appOpCollection.aggregate([
+                {
+                    $lookup:
+                    {
+                        from: 'bookingAppointment',
+                        localField: 'name',
+                        foreignField: 'treatment',
+                        pipeline: [
+                            {
+                                $match: {
+                                    $expr: {
+                                        $eq: ['appointmentDate', date]
+                                    }
+                                }
+                            }
+                        ],
+                        as: 'booked'
+                    }
+                },
+                {
+                    $project:
+                    {
+                        name: 1,
+                        slots: 1,
+                        booked: {
+                            $map: {
+                                input: "$booked",
+                                as: "book",
+                                in: '$$book.slot'
+                            }
+                        }
+                    }
+                },
+                {
+                    $project: {
+                        name: 1,
+                        slots: {
+                            $setDifference: ['$slots', $booked]
+                        }
+                    }
+                }
+            ]).toArray();
+            res.send(options)
+        })
+
 
         app.post('/booking-appointment', async (req, res) => {
             const booking = req.body;
