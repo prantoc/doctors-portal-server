@@ -75,7 +75,7 @@ async function run() {
                     $project: {
                         name: 1,
                         slots: {
-                            $setDifference: ['$slots', $booked]
+                            $setDifference: ['$slots', '$booked']
                         }
                     }
                 }
