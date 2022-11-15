@@ -15,9 +15,15 @@ async function run() {
 
     try {
         const appOpCollection = client.db("doctorsPortal").collection("appointmentOptions");
-
+        const bookingCollection = client.db('doctorsPortal').collection("bookingAppointment")
         app.get('/appointment-options', async (req, res) => {
             const result = await appOpCollection.find({}).toArray();
+            res.send(result)
+        })
+
+        app.post('/booking-appointment', async (req, res) => {
+            const booking = req.body;
+            const result = await bookingCollection.insertOne(booking);
             res.send(result)
         })
 
