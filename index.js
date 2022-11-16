@@ -49,7 +49,7 @@ async function run() {
                             {
                                 $match: {
                                     $expr: {
-                                        $eq: ['appointmentDate', date]
+                                        $eq: ['$appointmentDate', date]
                                     }
                                 }
                             }
