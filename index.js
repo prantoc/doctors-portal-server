@@ -10,13 +10,42 @@ const port = process.env.PORT || 5000
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.7incky7.mongodb.net/?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
+
+
+function verifyJWT(req, res, next) {
+    const authHeader = req.headers.authoraization;
+    if (!authHeader) {
+        return res.status(401).send('Unathorized Access !')
+    }
+    const token = authHeader.split(' ')[1];
+    console.log(token);
+    jwt.verify(token, process.env.ACCESS_TOKEN, function (err, decoded) {
+        if (err) {
+            return res.status(403).send({ message: 'Forbidden Access!' })
+        }
+        req.decoded = decoded
+        next()
+    });
+}
 async function run() {
-
-
     try {
         const appOpCollection = client.db("doctorsPortal").collection("appointmentOptions");
         const usersCollection = client.db('doctorsPortal').collection("user")
         const bookingCollection = client.db('doctorsPortal').collection("bookingAppointment")
+
+
+        //# jwt-token-create 
+        app.get('/jwt', async (req, res) => {
+            const email = req.query.email
+            const query = { email: email }
+            const user = await usersCollection.findOne(query);
+            if (user) {
+                const token = jwt.sign({ email }, process.env.ACCESS_TOKEN, { expiresIn: '1h' });
+                return res.send({ accessToken: token })
+            }
+            res.status(403).send({ accessToken: '' })
+        })
+
 
 
         //? Appointment-options 
@@ -85,19 +114,6 @@ async function run() {
             ]).toArray();
             res.send(options)
         })
-        //# jwt-token-create 
-        app.get('/jwt', async (req, res) => {
-            const email = req.query.email
-            const query = { email: email }
-            const user = await usersCollection.findOne(query);
-            if (user) {
-                const token = jwt.sign({ email }, process.env.ACCESS_TOKEN, { expiresIn: '1h' });
-                return res.send({ accessToken: token })
-            }
-            res.status(403).send({ accessToken: '' })
-        })
-
-
 
         //? Users
         app.post('/users', async (req, res) => {
@@ -124,8 +140,12 @@ async function run() {
             res.send(result)
         })
 
-        app.get('/booking-appointments', async (req, res) => {
+        app.get('/booking-appointments', verifyJWT, async (req, res) => {
             const email = req.query.email
+            const decodedEmail = req.decoded.email;
+            if (email !== decodedEmail) {
+                return res.status(403).send({ message: 'Forbidden Access!' })
+            }
             const query = { email: email }
             const result = await bookingCollection.find(query).toArray()
             res.send(result)
