@@ -15,27 +15,30 @@ async function run() {
 
     try {
         const appOpCollection = client.db("doctorsPortal").collection("appointmentOptions");
+        const usersCollection = client.db('doctorsPortal').collection("user")
         const bookingCollection = client.db('doctorsPortal').collection("bookingAppointment")
 
-        //?----------------- bad way aggregate function in mongodb-----------------------------
-        app.get('/appointment-options', async (req, res) => {
-            const date = req.query.date
-            // console.log(date);
-            const options = await appOpCollection.find({}).toArray();
-            const bookingQuery = { appointmentDate: date }
-            const booked = await bookingCollection.find(bookingQuery).toArray();
 
-            options.forEach(op => {
-                const optionBooked = booked.filter(book => book.treatment === op.name)
-                const bookedSlots = optionBooked.map(book => book.slot)
-                const remaningSlots = op.slots.filter(slot => !bookedSlots.includes(slot))
-                op.slots = remaningSlots
-            })
-            res.send(options)
+        //? Appointment-options 
+        //!----------------- bad way aggregate function in mongodb-----------------------------
+        // app.get('/appointment-options', async (req, res) => {
+        //     const date = req.query.date
+        //     // console.log(date);
+        //     const options = await appOpCollection.find({}).toArray();
+        //     const bookingQuery = { appointmentDate: date }
+        //     const booked = await bookingCollection.find(bookingQuery).toArray();
 
-        })
+        //     options.forEach(op => {
+        //         const optionBooked = booked.filter(book => book.treatment === op.name)
+        //         const bookedSlots = optionBooked.map(book => book.slot)
+        //         const remaningSlots = op.slots.filter(slot => !bookedSlots.includes(slot))
+        //         op.slots = remaningSlots
+        //     })
+        //     res.send(options)
 
-        //?----------------- best way aggregate function in mongodb--------------------
+        // })
+
+        //*----------------- best way aggregate function in mongodb--------------------
         app.get('/v2/appointment-options', async (req, res) => {
             const date = req.query.date
             const options = await appOpCollection.aggregate([
@@ -83,7 +86,14 @@ async function run() {
             res.send(options)
         })
 
+        //? Users
+        app.post('/users', async (req, res) => {
+            const user = req.body
+            const result = await usersCollection.insertOne(user);
+            res.send(result)
+        })
 
+        //? User-Bookings
         app.post('/booking-appointment', async (req, res) => {
             const booking = req.body;
             const query = {
@@ -103,10 +113,8 @@ async function run() {
 
         app.get('/booking-appointments', async (req, res) => {
             const email = req.query.email
-            console.log(email);
             const query = { email: email }
             const result = await bookingCollection.find(query).toArray()
-            console.log(result);
             res.send(result)
         })
 
