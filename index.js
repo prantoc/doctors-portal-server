@@ -2,7 +2,7 @@ const express = require('express')
 const jwt = require('jsonwebtoken');
 var cors = require('cors')
 require('dotenv').config()
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const app = express()
 app.use(cors())
 app.use(express.json())
@@ -123,6 +123,20 @@ async function run() {
             const user = req.body
             const result = await usersCollection.insertOne(user);
             res.send(result)
+        })
+
+        app.put('/users/admin/:id', async (req, res) => {
+            const userId = req.params.id
+            const filter = { _id: ObjectId(userId) };
+            // const options = { upsert: true };
+            const updateDoc = {
+                $set: {
+                    role: `admin`
+                },
+            };
+
+            const result = await usersCollection.updateOne(filter, updateDoc);
+            res.send(result);
         })
 
         //? User-Bookings
