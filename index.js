@@ -91,15 +91,22 @@ async function run() {
                 treatment: booking.treatment,
                 email: booking.email
             }
-
             const booked = await bookingCollection.find(query).toArray();
 
             if (booked.length) {
                 const message = `You have alreand a booking for this day ${booking.appointmentDate}`
                 return res.send(({ acknowledge: false, message }))
             }
-
             const result = await bookingCollection.insertOne(booking);
+            res.send(result)
+        })
+
+        app.get('/booking-appointments', async (req, res) => {
+            const email = req.query.email
+            console.log(email);
+            const query = { email: email }
+            const result = await bookingCollection.find(query).toArray()
+            console.log(result);
             res.send(result)
         })
 
