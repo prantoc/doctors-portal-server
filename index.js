@@ -31,7 +31,7 @@ async function run() {
         const appOpCollection = client.db("doctorsPortal").collection("appointmentOptions");
         const usersCollection = client.db('doctorsPortal').collection("user")
         const bookingCollection = client.db('doctorsPortal').collection("bookingAppointment")
-
+        const doctorsCollection = client.db('doctorsPortal').collection("doctors")
 
         //# jwt-token-create 
         app.get('/jwt', async (req, res) => {
@@ -118,10 +118,18 @@ async function run() {
             const decodedEmail = req.decoded.email
             const query = { email: decodedEmail }
             const isAdmin = await usersCollection.findOne(query)
+            console.log(isAdmin.role);
             if (isAdmin.role !== 'admin') {
                 return res.status(403).send({ message: 'Forbidden Access!' })
             }
             const result = await appOpCollection.find({}).project({ name: 1 }).toArray()
+            res.send(result)
+        })
+
+        //? Doctors
+        app.post('/addDoctors', async (req, res) => {
+            const doctor = req.body
+            const result = await doctorsCollection.insertOne(doctor)
             res.send(result)
         })
 
