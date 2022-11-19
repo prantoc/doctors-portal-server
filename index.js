@@ -127,8 +127,14 @@ async function run() {
         })
 
         //? Doctors
-        app.post('/addDoctors', async (req, res) => {
+        app.post('/addDoctors', verifyJWT, async (req, res) => {
             const doctor = req.body
+            const decodedEmail = req.decoded.email
+            const query = { email: decodedEmail }
+            const isAdmin = await usersCollection.findOne(query)
+            if (isAdmin.role !== 'admin') {
+                return res.status(403).send({ message: 'Forbidden Access!' })
+            }
             const result = await doctorsCollection.insertOne(doctor)
             res.send(result)
         })
