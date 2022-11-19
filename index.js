@@ -114,13 +114,13 @@ async function run() {
             res.send(options)
         })
 
-        app.get('/appointmentSpeciality', async (req, res) => {
-            // const decodedEmail = req.decoded.email
-            // const query = { email: decodedEmail }
-            // const isAdmin = await usersCollection.findOne(query)
-            // if (isAdmin.role !== 'admin') {
-            //     return res.status(403).send({ message: 'Forbidden Access!' })
-            // }
+        app.get('/appointmentSpeciality', verifyJWT, async (req, res) => {
+            const decodedEmail = req.decoded.email
+            const query = { email: decodedEmail }
+            const isAdmin = await usersCollection.findOne(query)
+            if (isAdmin.role !== 'admin') {
+                return res.status(403).send({ message: 'Forbidden Access!' })
+            }
             const result = await appOpCollection.find({}).project({ name: 1 }).toArray()
             res.send(result)
         })
