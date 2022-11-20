@@ -202,6 +202,29 @@ async function run() {
         })
 
         //? User-Bookings
+        app.get('/booking-appointments', verifyJWT, async (req, res) => {
+            const email = req.query.email
+            const decodedEmail = req.decoded.email;
+            if (email !== decodedEmail) {
+                return res.status(403).send({ message: 'Forbidden Access!' })
+            }
+            const query = { email: email }
+            const result = await bookingCollection.find(query).sort({ _id: -1 }).toArray()
+            res.send(result)
+        })
+
+
+        //# booking api for payment
+
+        app.get('/booking/:id', async (req, res) => {
+            const id = req.params.id
+            const query = { _id: ObjectId(id) }
+            const result = await bookingCollection.findOne(query)
+            res.send(result)
+        })
+
+        //# booking api for store user booking
+
         app.post('/booking-appointment', async (req, res) => {
             const booking = req.body;
             const query = {
@@ -219,16 +242,7 @@ async function run() {
             res.send(result)
         })
 
-        app.get('/booking-appointments', verifyJWT, async (req, res) => {
-            const email = req.query.email
-            const decodedEmail = req.decoded.email;
-            if (email !== decodedEmail) {
-                return res.status(403).send({ message: 'Forbidden Access!' })
-            }
-            const query = { email: email }
-            const result = await bookingCollection.find(query).sort({ _id: -1 }).toArray()
-            res.send(result)
-        })
+
 
     } finally {
     }
