@@ -7,11 +7,16 @@ const app = express()
 app.use(cors())
 app.use(express.json())
 const port = process.env.PORT || 5000
+//# This is your test secret API key.
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY)
 
+//# Mongodb settings
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.7incky7.mongodb.net/?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
 
 
+
+//# JWT verify
 function verifyJWT(req, res, next) {
     const authHeader = req.headers.authoraization;
     if (!authHeader) {
@@ -32,6 +37,7 @@ async function run() {
         const usersCollection = client.db('doctorsPortal').collection("user")
         const bookingCollection = client.db('doctorsPortal').collection("bookingAppointment")
         const doctorsCollection = client.db('doctorsPortal').collection("doctors")
+        const paymentCollection = client.db('doctorsPortal').collection("payment")
 
         //! after verify jwtVerify it will be ran 
         const verifyAdmin = async (req, res, next) => {
@@ -202,6 +208,7 @@ async function run() {
         })
 
         //? User-Bookings
+        //# get specific user bookings 
         app.get('/booking-appointments', verifyJWT, async (req, res) => {
             const email = req.query.email
             const decodedEmail = req.decoded.email;
@@ -214,8 +221,7 @@ async function run() {
         })
 
 
-        //# booking api for payment
-
+        //# booking api for payment-------------------------
         app.get('/booking/:id', async (req, res) => {
             const id = req.params.id
             const query = { _id: ObjectId(id) }
@@ -223,8 +229,42 @@ async function run() {
             res.send(result)
         })
 
-        //# booking api for store user booking
+        //? Strip api--------------------------------------
+        app.post("/create-payment-intent", async (req, res) => {
+            const booking = req.body;
+            const price = booking.price
+            const amount = price * 100;
 
+            // Create a PaymentIntent with the order amount and currency
+            const paymentIntent = await stripe.paymentIntents.create({
+                amount: amount,
+                currency: "usd",
+                "payment_method_types": [
+                    "card"
+                ],
+            });
+
+            res.send({
+                clientSecret: paymentIntent.client_secret,
+            });
+        });
+
+        //# Store payment details
+        app.post('/payments', async (req, res) => {
+            const paymentData = req.body
+            const result = await paymentCollection.insertOne(paymentData)
+            const id = paymentData.bookingId
+            const query = { _id: ObjectId(id) }
+            const updateDoc = {
+                $set: {
+                    paid: true
+                },
+            };
+            const updatedResult = await bookingCollection.updateOne(query, updateDoc)
+            res.send(result)
+        })
+
+        //# booking api for store user booking-----------------------
         app.post('/booking-appointment', async (req, res) => {
             const booking = req.body;
             const query = {
