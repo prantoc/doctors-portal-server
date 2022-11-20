@@ -105,6 +105,7 @@ async function run() {
                     {
                         name: 1,
                         slots: 1,
+                        price: 1,
                         booked: {
                             $map: {
                                 input: "$booked",
@@ -117,6 +118,7 @@ async function run() {
                 {
                     $project: {
                         name: 1,
+                        price: 1,
                         slots: {
                             $setDifference: ['$slots', '$booked']
                         }
@@ -130,6 +132,18 @@ async function run() {
             const result = await appOpCollection.find({}).project({ name: 1 }).toArray()
             res.send(result)
         })
+
+        //* temporary to update price field on appointment options 
+        // app.get('/add-price', async (req, res) => {
+        //     const options = { upsert: true };
+        //     const updateDoc = {
+        //         $set: {
+        //             price: 99
+        //         },
+        //     };
+        //     const result = await appOpCollection.updateMany({}, updateDoc, options)
+        //     res.send(result)
+        // })
 
         //? Doctors
         app.get('/doctors', verifyJWT, verifyAdmin, async (req, res) => {
@@ -205,8 +219,12 @@ async function run() {
             res.send(result)
         })
 
-        app.get('/booking-appointments', verifyJWT, verifyAdmin, async (req, res) => {
-
+        app.get('/booking-appointments', verifyJWT, async (req, res) => {
+            const email = req.query.email
+            const decodedEmail = req.decoded.email;
+            if (email !== decodedEmail) {
+                return res.status(403).send({ message: 'Forbidden Access!' })
+            }
             const query = { email: email }
             const result = await bookingCollection.find(query).sort({ _id: -1 }).toArray()
             res.send(result)
