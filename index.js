@@ -196,6 +196,7 @@ async function run() {
         })
 
         app.put('/users/admin/:id', verifyJWT, verifyAdmin, async (req, res) => {
+            const userId = req.params.id
             const filter = { _id: ObjectId(userId) };
             // const options = { upsert: true };
             const updateDoc = {
