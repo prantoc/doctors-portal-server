@@ -171,6 +171,7 @@ async function run() {
 
 
         app.delete('/doctor/:id', verifyJWT, verifyAdmin, async (req, res) => {
+            const id = req.params.id
             const filter = { _id: ObjectId(id) }
             const result = await doctorsCollection.deleteOne(filter)
             res.send(result)
