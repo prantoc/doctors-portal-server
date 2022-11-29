@@ -262,7 +262,7 @@ async function run() {
                     paid: true
                 },
             };
-            const updatedResult = await bookingCollection.updateOne(query, updateDoc)
+            await bookingCollection.updateOne(query, updateDoc)
             res.send(result)
         })
 
