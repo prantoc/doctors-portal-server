@@ -37,27 +37,23 @@ function verifyJWT(req, res, next) {
 
 //# send  email for booking appointment
 // This is your API key that you retrieve from www.mailgun.com/cp (free up to 10K monthly emails)
-const auth = {
-    auth: {
-        api_key: process.env.MG_API_KEY,
-        domain: process.env.MG_EMAIN_DOMAIN
-    }
-}
+
 
 function sendMailForAppoinemntBooking(booking) {
     const { email } = booking
-
+    const auth = {
+        auth: {
+            api_key: process.env.MG_API_KEY,
+            domain: process.env.MG_EMAIN_DOMAIN
+        }
+    }
 
     const nodemailerMailgun = nodemailer.createTransport(mg(auth));
 
     nodemailerMailgun.sendMail({
-        from: 'myemail@example.com',
-        to: 'recipient@domain.com', // An array if you have multiple recipients.
-        cc: 'second@domain.com',
-        bcc: 'secretagent@company.gov',
+        from: 'chakrabortypranto39@gmail.com',
+        to: email || 'chakrabortypranto39@gmail.com', // An array if you have multiple recipients.
         subject: 'Hey you, awesome!',
-        'replyTo': 'reply2this@company.com',
-        //You can use "html:" to send HTML email content. It's magic!
         html: '<b>Wow Big powerful letters</b>',
         //You can use "text:" to send plain-text content. It's oldschool!
         text: 'Mailgun rocks, pow pow!'
