@@ -6,6 +6,8 @@ const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const app = express()
 app.use(cors())
 app.use(express.json())
+const nodemailer = require("nodemailer");
+const mg = require('nodemailer-mailgun-transport');
 const port = process.env.PORT || 5000
 //# This is your test secret API key.
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY)
@@ -31,6 +33,46 @@ function verifyJWT(req, res, next) {
         next()
     });
 }
+
+
+//# send  email for booking appointment
+// This is your API key that you retrieve from www.mailgun.com/cp (free up to 10K monthly emails)
+const auth = {
+    auth: {
+        api_key: process.env.MG_API_KEY,
+        domain: process.env.MG_EMAIN_DOMAIN
+    }
+}
+
+function sendMailForAppoinemntBooking(booking) {
+    const { email } = booking
+
+
+    const nodemailerMailgun = nodemailer.createTransport(mg(auth));
+
+    nodemailerMailgun.sendMail({
+        from: 'myemail@example.com',
+        to: 'recipient@domain.com', // An array if you have multiple recipients.
+        cc: 'second@domain.com',
+        bcc: 'secretagent@company.gov',
+        subject: 'Hey you, awesome!',
+        'replyTo': 'reply2this@company.com',
+        //You can use "html:" to send HTML email content. It's magic!
+        html: '<b>Wow Big powerful letters</b>',
+        //You can use "text:" to send plain-text content. It's oldschool!
+        text: 'Mailgun rocks, pow pow!'
+    }, (err, info) => {
+        if (err) {
+            console.log(`Error: ${err}`);
+        }
+        else {
+            console.log(`Response: ${info}`);
+        }
+    });
+
+}
+
+
 async function run() {
     try {
         const appOpCollection = client.db("doctorsPortal").collection("appointmentOptions");
@@ -281,6 +323,7 @@ async function run() {
                 return res.send(({ acknowledge: false, message }))
             }
             const result = await bookingCollection.insertOne(booking);
+            sendMailForAppoinemntBooking(booking)
             res.send(result)
         })
 
